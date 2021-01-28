@@ -1,9 +1,18 @@
 from django.db import models
 from django.contrib.auth.models  import User
 from django.utils import timezone
+from django.urls import reverse
 
 
 # Create your models here.
+#to use custome manager to show only published posts, NOT the drafted posts
+class PublishedManager(models.Manager):
+
+    def get_queryset(self):
+        return super(PublishedManager,self).get_queryset().filter(status='published')
+
+
+
 class Post(models.Model):
 
 
@@ -62,6 +71,18 @@ class Post(models.Model):
     status = models.CharField(max_length=10,
     choices=STATUS_CHOICES,default='draft')
 
+    #change the manager so that The manager will allow you to
+    #retrieve posts using Post.published.all().
+    #If no manager is defined in the model, Django automatically creates the objects
+    #default manager for it. If you declare any managers for your model but you want
+    #to keep the objects manager as well, you have to add it explicitly to your model.
+    objects = models.Manager() # The default manager.
+    published = PublishedManager() # Our custom manager.
+
+    #this reverse() method, allows you to build URLs by their name and pass optional parameters
+    def get_absolute_url(self):
+        return reverse('blog:post_detail',args=[self.publish.year,self.publish.month,self.publish.day, self.slug])
+
 #You tell Django to sort results by the publish field in descending order by default when you query the database
 #You specify the descending order using the negative prefix. By doing this, posts
 #published recently will appear first.
@@ -71,3 +92,4 @@ class Meta:
 #the default human-readable representation of the object
 def __str__(self):
     return self.title
+
